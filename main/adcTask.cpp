@@ -14,6 +14,7 @@
 #include <stdio.h>
 #include <string.h>
 
+#define ADC_ATTEN ADC_ATTEN_DB_12 // only 1 for this chip!
 #define EXAMPLE_ADC_UNIT ADC_UNIT_1
 
 #define EXAMPLE_ADC_CONV_MODE ADC_CONV_SINGLE_UNIT_1
@@ -32,10 +33,10 @@
 #define EXAMPLE_READ_LEN 12
 
 static const float CALFACTOR[] = {1.0, 5.18/3625.0, 18.0/2125.0}; // todo: set to correct calibration factors
-static const uint8_t attn[] = { ADC_ATTEN_DB_12,ADC_ATTEN_DB_12,ADC_ATTEN_DB_12};
+//static const uint8_t attn[] = { ADC_ATTEN_DB_0,ADC_ATTEN_DB_12,ADC_ATTEN_DB_12};
 
 static adc_channel_t channel[] = {ADC_CHANNEL_0, ADC_CHANNEL_1, ADC_CHANNEL_3};
-static Averager ADC0averager(512); 
+static Averager ADC0averager(128); 
 static Averager ADC1averager(EXAMPLE_READ_LEN);
 static Averager ADC2averager(EXAMPLE_READ_LEN);
 
@@ -77,7 +78,7 @@ static void continuous_adc_init(adc_channel_t *channel, uint8_t channel_num, adc
 	adc_digi_pattern_config_t adc_pattern[SOC_ADC_PATT_LEN_MAX] = {0};
 	dig_cfg.pattern_num = channel_num;
 	for (int i = 0; i < channel_num; i++) {
-		adc_pattern[i].atten = attn[i];
+		adc_pattern[i].atten = ADC_ATTEN;
 		adc_pattern[i].channel = channel[i] & 0x7;
 		adc_pattern[i].unit = EXAMPLE_ADC_UNIT;
 		adc_pattern[i].bit_width = EXAMPLE_ADC_BIT_WIDTH;
