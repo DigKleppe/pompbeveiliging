@@ -53,15 +53,20 @@ static bool IRAM_ATTR s_conv_done_cb(adc_continuous_handle_t handle, const adc_c
 
 	return (mustYield == pdTRUE);
 }
-
 static void continuous_adc_init(adc_channel_t *channel, uint8_t channel_num, adc_continuous_handle_t *out_handle) {
 	adc_continuous_handle_t handle = NULL;
+	esp_err_t err = ESP_OK;
 
 	adc_continuous_handle_cfg_t adc_config = {
 		.max_store_buf_size = 1024,
 		.conv_frame_size = EXAMPLE_READ_LEN,
+		.flags = 0,
 	};
-	ESP_ERROR_CHECK(adc_continuous_new_handle(&adc_config, &handle));
+	err = adc_continuous_new_handle(&adc_config, &handle);
+	if (err != ESP_OK) {
+		ESP_LOGE(TAG, "Create ADC continuous handle failed: %s", esp_err_to_name(err));  
+		return;
+	}
 
 	adc_continuous_config_t dig_cfg = {
 		.sample_freq_hz = 1000,
@@ -82,12 +87,17 @@ static void continuous_adc_init(adc_channel_t *channel, uint8_t channel_num, adc
 		ESP_LOGI(TAG, "adc_pattern[%d].unit is :%" PRIx8, i, adc_pattern[i].unit);
 	}
 	dig_cfg.adc_pattern = adc_pattern;
-	ESP_ERROR_CHECK(adc_continuous_config(handle, &dig_cfg));
+	err = adc_continuous_config(handle, &dig_cfg);
+	if (err != ESP_OK) {
+		ESP_LOGE(TAG, "ADC continuous config failed: %s", esp_err_to_name(err));
+		
+		return;
+	}
 
 	*out_handle = handle;
 }
 void ADCTask(void *pvParameter) {
-	esp_err_t ret;
+	esp_err_t err;
 	uint32_t ret_num = 0;
 	uint8_t result[EXAMPLE_READ_LEN] = {0};
 	memset(result, 0xcc, EXAMPLE_READ_LEN);
@@ -100,8 +110,16 @@ void ADCTask(void *pvParameter) {
 	adc_continuous_evt_cbs_t cbs = {
 		.on_conv_done = s_conv_done_cb,
 	};
-	ESP_ERROR_CHECK(adc_continuous_register_event_callbacks(handle, &cbs, NULL));
-	ESP_ERROR_CHECK(adc_continuous_start(handle));
+	err = adc_continuous_register_event_callbacks(handle, &cbs, NULL);
+	if (err != ESP_OK) {
+		ESP_LOGE(TAG, "Register ADC continuous event callbacks failed: %s", esp_err_to_name(err));
+		vTaskDelete(NULL);
+	}
+	err = adc_continuous_start(handle);
+	if (err != ESP_OK) {
+		ESP_LOGE(TAG, "ADC continuous start failed: %s", esp_err_to_name(err));
+		vTaskDelete(NULL);
+	}
 
 	while (1) {
 
@@ -116,9 +134,9 @@ void ADCTask(void *pvParameter) {
 		ulTaskNotifyTake(pdTRUE, portMAX_DELAY);
 
 		while (1) {
-			ret = adc_continuous_read(handle, result, EXAMPLE_READ_LEN, &ret_num, 0);
-			if (ret == ESP_OK) {
-			//	ESP_LOGI(TAG, "ret is %x, ret_num is %" PRIu32 " bytes", ret, ret_num);
+			err = adc_continuous_read(handle, result, EXAMPLE_READ_LEN, &ret_num, 0);
+			if (err == ESP_OK) {
+			//	ESP_LOGI(TAG, "ret is %x, ret_num is %" PRIu32 " bytes", err, ret_num);
 				for (int i = 0; i < ret_num; i += SOC_ADC_DIGI_RESULT_BYTES) {
 					adc_digi_output_data_t *p = (adc_digi_output_data_t *)&result[i];
 					uint32_t chan_num = EXAMPLE_ADC_GET_CHANNEL(p);
