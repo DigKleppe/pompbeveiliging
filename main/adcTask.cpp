@@ -30,12 +30,12 @@
 #define EXAMPLE_ADC_GET_DATA(p_data) ((p_data)->type2.data)
 #endif
 
-#define EXAMPLE_READ_LEN 256
+#define EXAMPLE_READ_LEN 12
 
 static const float CALFACTOR[3] = {1.0, 1.0, 1.0}; // todo: set to correct calibration factors
 
 static adc_channel_t channel[] = {ADC_CHANNEL_0, ADC_CHANNEL_1, ADC_CHANNEL_3};
-static Averager ADC0averager(EXAMPLE_READ_LEN);
+static Averager ADC0averager(1024); 
 static Averager ADC1averager(EXAMPLE_READ_LEN);
 static Averager ADC2averager(EXAMPLE_READ_LEN);
 
@@ -118,7 +118,7 @@ void ADCTask(void *pvParameter) {
 		while (1) {
 			ret = adc_continuous_read(handle, result, EXAMPLE_READ_LEN, &ret_num, 0);
 			if (ret == ESP_OK) {
-				ESP_LOGI("TASK", "ret is %x, ret_num is %" PRIu32 " bytes", ret, ret_num);
+			//	ESP_LOGI(TAG, "ret is %x, ret_num is %" PRIu32 " bytes", ret, ret_num);
 				for (int i = 0; i < ret_num; i += SOC_ADC_DIGI_RESULT_BYTES) {
 					adc_digi_output_data_t *p = (adc_digi_output_data_t *)&result[i];
 					uint32_t chan_num = EXAMPLE_ADC_GET_CHANNEL(p);
@@ -127,15 +127,15 @@ void ADCTask(void *pvParameter) {
 						if (channel[idx] == chan_num) { // find index
 							Averager *ADCaverager = pADCaverager[idx];
 							ADCaverager[idx].write(data);
-							ADCValue[idx] = CALFACTOR[idx] * ADCaverager[i].average();
-							ESP_LOGI(TAG, "Channel: %" PRIu32 ", Value: %2.1f", chan_num, ADCValue[idx]);
+							ADCValue[idx] = CALFACTOR[idx] * ADCaverager[idx].average();
+						//	ESP_LOGI(TAG, "Channel: %" PRIu32 ", Value: %2.1f", chan_num, ADCValue[idx]);
 							ADCsamples++;
 							break;
 						}
 					}
 				}
 			}
-			vTaskDelay(100 / portTICK_PERIOD_MS);
+			vTaskDelay(1 / portTICK_PERIOD_MS);
 		}
 	}
 	ESP_ERROR_CHECK(adc_continuous_stop(handle));

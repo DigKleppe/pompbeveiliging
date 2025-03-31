@@ -1,7 +1,7 @@
 #include "driver/gpio.h"
 
-const gpio_num_t GREEN_LED_PIN = GPIO_NUM_4;
-const gpio_num_t RED_LED_PIN = GPIO_NUM_5;
+const gpio_num_t RED_LED_PIN = GPIO_NUM_4;
+const gpio_num_t GREEN_LED_PIN = GPIO_NUM_5;
 const gpio_num_t KEY_LED_PIN = GPIO_NUM_6;
 const gpio_num_t BLUE_LED_PIN = GPIO_NUM_8;
 const gpio_num_t LAMP_PIN = GPIO_NUM_8;
