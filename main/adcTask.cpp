@@ -17,7 +17,6 @@
 #define EXAMPLE_ADC_UNIT ADC_UNIT_1
 
 #define EXAMPLE_ADC_CONV_MODE ADC_CONV_SINGLE_UNIT_1
-#define EXAMPLE_ADC_ATTEN ADC_ATTEN_DB_12
 #define EXAMPLE_ADC_BIT_WIDTH SOC_ADC_DIGI_MAX_BITWIDTH
 
 #if CONFIG_IDF_TARGET_ESP32 || CONFIG_IDF_TARGET_ESP32S2
@@ -32,14 +31,15 @@
 
 #define EXAMPLE_READ_LEN 12
 
-static const float CALFACTOR[3] = {1.0, 1.0, 1.0}; // todo: set to correct calibration factors
+static const float CALFACTOR[] = {1.0, 5.18/3625.0, 18.0/2125.0}; // todo: set to correct calibration factors
+static const uint8_t attn[] = { ADC_ATTEN_DB_12,ADC_ATTEN_DB_12,ADC_ATTEN_DB_12};
 
 static adc_channel_t channel[] = {ADC_CHANNEL_0, ADC_CHANNEL_1, ADC_CHANNEL_3};
-static Averager ADC0averager(1024); 
+static Averager ADC0averager(512); 
 static Averager ADC1averager(EXAMPLE_READ_LEN);
 static Averager ADC2averager(EXAMPLE_READ_LEN);
 
-static Averager *pADCaverager[] = {&ADC0averager, &ADC1averager, &ADC2averager};
+Averager *pADCaverager[] = {&ADC0averager, &ADC1averager, &ADC2averager};
 
 static TaskHandle_t s_task_handle;
 static const char *TAG = "ADCTask";
@@ -72,7 +72,7 @@ static void continuous_adc_init(adc_channel_t *channel, uint8_t channel_num, adc
 	adc_digi_pattern_config_t adc_pattern[SOC_ADC_PATT_LEN_MAX] = {0};
 	dig_cfg.pattern_num = channel_num;
 	for (int i = 0; i < channel_num; i++) {
-		adc_pattern[i].atten = EXAMPLE_ADC_ATTEN;
+		adc_pattern[i].atten = attn[i];
 		adc_pattern[i].channel = channel[i] & 0x7;
 		adc_pattern[i].unit = EXAMPLE_ADC_UNIT;
 		adc_pattern[i].bit_width = EXAMPLE_ADC_BIT_WIDTH;
@@ -126,9 +126,9 @@ void ADCTask(void *pvParameter) {
 					for (int idx = 0; idx < sizeof(channel) / sizeof(adc_channel_t); idx++) {
 						if (channel[idx] == chan_num) { // find index
 							Averager *ADCaverager = pADCaverager[idx];
-							ADCaverager[idx].write(data);
-							ADCValue[idx] = CALFACTOR[idx] * ADCaverager[idx].average();
-						//	ESP_LOGI(TAG, "Channel: %" PRIu32 ", Value: %2.1f", chan_num, ADCValue[idx]);
+							ADCaverager->write(data);
+							ADCValue[idx] = CALFACTOR[idx] * ADCaverager->average();
+						//	ESP_LOGI(TAG, "Channel: %d, Value: %2.1f data: %d", idx, ADCValue[idx],(int)data);
 							ADCsamples++;
 							break;
 						}

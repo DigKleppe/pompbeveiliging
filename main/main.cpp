@@ -67,6 +67,12 @@ void app_main(void) {
 	gpio_reset_pin(GPIO_NUM_2); // disable jtag pins
 	gpio_reset_pin(GPIO_NUM_3);
 	gpio_reset_pin(GPIO_NUM_4);
+	gpio_reset_pin(GREEN_LED_PIN);
+	gpio_reset_pin(RED_LED_PIN);
+	gpio_reset_pin(BLUE_LED_PIN);
+	gpio_reset_pin(BUZZER_PIN);
+	gpio_reset_pin(KEY_PIN);
+	gpio_reset_pin(KEY_LED_PIN);
 
 	gpio_set_direction(BLUE_LED_PIN, GPIO_MODE_OUTPUT); // on board led
 	gpio_set_level(BLUE_LED_PIN, 0);

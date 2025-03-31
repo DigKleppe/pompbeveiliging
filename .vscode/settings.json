@@ -1,6 +1,6 @@
 {
     "C_Cpp.intelliSenseEngine": "default",
-    "idf.espIdfPath": "/home/dig/programmas/esp32/v5.4/esp-idf",
+    "idf.espIdfPath": "/home/dig/esp32/esp-idf-v5.4.1",
     "idf.openOcdConfigs": [
         "board/esp32c3-builtin.cfg"
     ],
@@ -9,5 +9,9 @@
     "idf.customExtraVars": {
         "IDF_TARGET": "esp32c3"
     },
-    "idf.flashType": "UART"
+    "idf.flashType": "UART",
+    "idf.pythonInstallPath": "/usr/bin/python3",
+    "files.associations": {
+        "*.tcc": "cpp"
+    }
 }
