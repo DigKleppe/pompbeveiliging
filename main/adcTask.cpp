@@ -30,13 +30,13 @@
 #define EXAMPLE_ADC_GET_DATA(p_data) ((p_data)->type2.data)
 #endif
 
-#define EXAMPLE_READ_LEN 12
+#define EXAMPLE_READ_LEN 128
 
-static const float CALFACTOR[] = {1.0, 5.18/3625.0, 18.0/2125.0}; // todo: set to correct calibration factors
-//static const uint8_t attn[] = { ADC_ATTEN_DB_0,ADC_ATTEN_DB_12,ADC_ATTEN_DB_12};
+static const float CALFACTOR[] = {8.0/140.0, 5.18 / 3625.0, 18.0 / 2125.0}; 
+// static const uint8_t attn[] = { ADC_ATTEN_DB_0,ADC_ATTEN_DB_12,ADC_ATTEN_DB_12};
 
 static adc_channel_t channel[] = {ADC_CHANNEL_0, ADC_CHANNEL_1, ADC_CHANNEL_3};
-static Averager ADC0averager(128); 
+static Averager ADC0averager(512);
 static Averager ADC1averager(EXAMPLE_READ_LEN);
 static Averager ADC2averager(EXAMPLE_READ_LEN);
 
@@ -65,7 +65,7 @@ static void continuous_adc_init(adc_channel_t *channel, uint8_t channel_num, adc
 	};
 	err = adc_continuous_new_handle(&adc_config, &handle);
 	if (err != ESP_OK) {
-		ESP_LOGE(TAG, "Create ADC continuous handle failed: %s", esp_err_to_name(err));  
+		ESP_LOGE(TAG, "Create ADC continuous handle failed: %s", esp_err_to_name(err));
 		return;
 	}
 
@@ -91,7 +91,7 @@ static void continuous_adc_init(adc_channel_t *channel, uint8_t channel_num, adc
 	err = adc_continuous_config(handle, &dig_cfg);
 	if (err != ESP_OK) {
 		ESP_LOGE(TAG, "ADC continuous config failed: %s", esp_err_to_name(err));
-		
+
 		return;
 	}
 
@@ -137,7 +137,7 @@ void ADCTask(void *pvParameter) {
 		while (1) {
 			err = adc_continuous_read(handle, result, EXAMPLE_READ_LEN, &ret_num, 0);
 			if (err == ESP_OK) {
-			//	ESP_LOGI(TAG, "ret is %x, ret_num is %" PRIu32 " bytes", err, ret_num);
+				//	ESP_LOGI(TAG, "ret is %x, ret_num is %" PRIu32 " bytes", err, ret_num);
 				for (int i = 0; i < ret_num; i += SOC_ADC_DIGI_RESULT_BYTES) {
 					adc_digi_output_data_t *p = (adc_digi_output_data_t *)&result[i];
 					uint32_t chan_num = EXAMPLE_ADC_GET_CHANNEL(p);
@@ -147,7 +147,7 @@ void ADCTask(void *pvParameter) {
 							Averager *ADCaverager = pADCaverager[idx];
 							ADCaverager->write(data);
 							ADCValue[idx] = CALFACTOR[idx] * ADCaverager->average();
-						//	ESP_LOGI(TAG, "Channel: %d, Value: %2.1f data: %d", idx, ADCValue[idx],(int)data);
+							//	ESP_LOGI(TAG, "Channel: %d, Value: %2.1f data: %d", idx, ADCValue[idx],(int)data);
 							ADCsamples++;
 							break;
 						}

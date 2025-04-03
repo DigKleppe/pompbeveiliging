@@ -49,13 +49,9 @@ void testHardwareTask(void *pvParameter) {
 		vTaskDelay(1000 / portTICK_PERIOD_MS);
 		gpio_set_level(KEY_LED_PIN, 0);
 
-		gpio_set_level(BUZZER_PIN, 1);
-		vTaskDelay(1000 / portTICK_PERIOD_MS);
-		gpio_set_level(BUZZER_PIN, 0);
-
-		if (key(KEY)) { // stop = true;
-			ESP_LOGI("TASK", "Key pressed");
-		}
+		//	gpio_set_level(BUZZER_PIN, 1);
+		//	vTaskDelay(1000 / portTICK_PERIOD_MS);
+		//	gpio_set_level(BUZZER_PIN, 0);
 	}
 	vTaskDelete(NULL);
 }
@@ -74,18 +70,26 @@ void app_main(void) {
 	gpio_reset_pin(KEY_PIN);
 	gpio_reset_pin(KEY_LED_PIN);
 
-	gpio_set_direction(BLUE_LED_PIN, GPIO_MODE_OUTPUT); // on board led
-	gpio_set_level(BLUE_LED_PIN, 0);
+	gpio_set_drive_capability(GREEN_LED_PIN, GPIO_DRIVE_CAP_0); 
+	gpio_set_drive_capability(RED_LED_PIN, GPIO_DRIVE_CAP_0);
+	gpio_set_drive_capability(LAMP_PIN, GPIO_DRIVE_CAP_0);// weak drives for direct drive transistors
+	gpio_set_drive_capability(BUZZER_PIN, GPIO_DRIVE_CAP_0);
+	
 	gpio_set_direction(GREEN_LED_PIN, GPIO_MODE_OUTPUT);
-	gpio_set_level(GREEN_LED_PIN, 0);
+	gpio_set_level(GREEN_LED_PIN, 1);
 	gpio_set_direction(RED_LED_PIN, GPIO_MODE_OUTPUT);
-	gpio_set_level(RED_LED_PIN, 0);
+	gpio_set_level(RED_LED_PIN, 1);
 	gpio_set_direction(KEY_LED_PIN, GPIO_MODE_OUTPUT);
-	gpio_set_level(KEY_LED_PIN, 0);
+	gpio_set_level(KEY_LED_PIN, 1);
 	gpio_set_direction(LAMP_PIN, GPIO_MODE_OUTPUT);
-	gpio_set_level(LAMP_PIN, 0);
+	gpio_set_level(LAMP_PIN, 1);
 	gpio_set_direction(BUZZER_PIN, GPIO_MODE_OUTPUT); // same pin as blue led
+	gpio_set_level(BUZZER_PIN, 1);
+	vTaskDelay(1000 / portTICK_PERIOD_MS);
 	gpio_set_level(BUZZER_PIN, 0);
+	gpio_set_level(GREEN_LED_PIN, 0);
+	gpio_set_level(RED_LED_PIN, 0);
+	gpio_set_level(LAMP_PIN, 0);
 
 	gpio_set_direction(KEY_PIN, GPIO_MODE_INPUT);
 
@@ -96,7 +100,10 @@ void app_main(void) {
 	keyTimer = xTimerCreate("keysTimer", 10, pdTRUE, NULL, keysTimerHandler);
 	xTimerStart(keyTimer, 0);
 	while (true) {
-		vTaskDelay(1000 / portTICK_PERIOD_MS);
+		if (key(KEY))
+			ESP_LOGI("TASK", "Key pressed");
+		vTaskDelay(100 / portTICK_PERIOD_MS);
 	}
+	
 }
 }
