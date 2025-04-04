@@ -4,7 +4,7 @@
 extern float ADCValue[];
 extern uint32_t ADCsamples;
 
-enum { ADC_CURRENT, ADC_5V, ADC_18V };  // ADC channel functions
+enum { ADC_CURRENT, ADC_5V, ADC_BATT };  // ADC channel functions
 
 void ADCTask(void *pvParameter);
 #endif

@@ -33,7 +33,6 @@
 #define EXAMPLE_READ_LEN 128
 
 static const float CALFACTOR[] = {8.0/140.0, 5.18 / 3625.0, 18.0 / 2125.0}; 
-// static const uint8_t attn[] = { ADC_ATTEN_DB_0,ADC_ATTEN_DB_12,ADC_ATTEN_DB_12};
 
 static adc_channel_t channel[] = {ADC_CHANNEL_0, ADC_CHANNEL_1, ADC_CHANNEL_3};
 static Averager ADC0averager(512);
