@@ -82,9 +82,9 @@ static void continuous_adc_init(adc_channel_t *channel, uint8_t channel_num, adc
 		adc_pattern[i].unit = EXAMPLE_ADC_UNIT;
 		adc_pattern[i].bit_width = EXAMPLE_ADC_BIT_WIDTH;
 
-		ESP_LOGI(TAG, "adc_pattern[%d].atten is :%" PRIx8, i, adc_pattern[i].atten);
-		ESP_LOGI(TAG, "adc_pattern[%d].channel is :%" PRIx8, i, adc_pattern[i].channel);
-		ESP_LOGI(TAG, "adc_pattern[%d].unit is :%" PRIx8, i, adc_pattern[i].unit);
+		// ESP_LOGI(TAG, "adc_pattern[%d].atten is :%" PRIx8, i, adc_pattern[i].atten);
+		// ESP_LOGI(TAG, "adc_pattern[%d].channel is :%" PRIx8, i, adc_pattern[i].channel);
+		// ESP_LOGI(TAG, "adc_pattern[%d].unit is :%" PRIx8, i, adc_pattern[i].unit);
 	}
 	dig_cfg.adc_pattern = adc_pattern;
 	err = adc_continuous_config(handle, &dig_cfg);
