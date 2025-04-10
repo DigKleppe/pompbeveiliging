@@ -10,7 +10,7 @@ const gpio_num_t KEY_PIN = GPIO_NUM_20;
 
 #define PUMPONLEVEL 2.0		// Amps  above this current, the pump is on
 #define ERRORLEVEL_5V 4.0	// if this voltage is low, we don't have mains volatage
-#define BATLOWLEVEL 15.0  
+#define BATLOWLEVEL 16.0  
 
 typedef enum {
 	NORMAL,
@@ -18,6 +18,7 @@ typedef enum {
     BATTERYLOW,
 	PUMPWASACTIVE,
 	PUMPWASACTIVEACCEPTED,
+	TEST
 } state_t;
 
 typedef enum { LAMP_OFF, LAMP_ON, LAMP_FLASH_FAST, LAMP_FLASH_SLOW, LAMP_BLINK } lampState_t;

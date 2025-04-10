@@ -8,6 +8,7 @@ set(COMPONENT_ADD_INCLUDEDIRS "include")
 #set(COMPONENT_PRIV_REQUIRES "klp")
 #set(COMPONENT_EMBED_TXTFILES "${project_dir}/server_certs/ca_cert.pem")
 register_component()
+
 #spiffs_create_partition_image(storage ../spiffs_image FLASH_IN_PROJECT)
 
 
