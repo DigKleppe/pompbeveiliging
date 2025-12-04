@@ -30,7 +30,7 @@ void keysTimerHandler(TimerHandle_t xTimer) { keysTimerHandler_ms(10); }
 
 lampState_t lampState = LAMP_OFF;
 state_t state = NORMAL;
-bool buzzerOn = false;
+volatile bool buzzerOn = false;
 
 void testTask(void *pvParameter) {
 	while (true) {
@@ -107,6 +107,7 @@ void buzzerTask(void *pvParameter) {
 	ESP_LOGI("TASK", "BuzzerTask");
 	while (true) {
 		if (buzzerOn) {
+			ESP_LOGI("TASK", "buzzer");
 			gpio_set_level(BUZZER_PIN, 1);
 			vTaskDelay(1000 / portTICK_PERIOD_MS);
 			gpio_set_level(BUZZER_PIN, 0);
@@ -123,7 +124,9 @@ void mainTask(void *pvParameter) {
 	ESP_LOGI("TASK", "mainTask");
 	bool mainsPresent = false;
 	bool batteryLow = false;
-
+	bool buzzerAccepted = false;
+	state_t lastState = NORMAL;
+	;
 	while (true) {
 		if (ADCValue[ADC_5V] < ERRORLEVEL_5V) {
 			//	ESP_LOGI(TAG, "No mains voltage %2.1f", ADCValue[ADC_5V]);
@@ -156,29 +159,29 @@ void mainTask(void *pvParameter) {
 			if (state < PUMPWASACTIVE) {
 				state = BATTERYLOW;
 			}
-		}
-		else {
+		} else {
 			if (state == BATTERYLOW)
 				state = NORMAL;
 		}
 
-
-		if (sensorMssg.state == 1)  
+		if (sensorMssg.state == 1) {
 			state = LEVEL_ALARM;
-		else {
-			if ( state == LEVEL_ALARM)
-				state = NORMAL;
 		}
-		
-		if ( sensorMssg.voltageL == 999 )
+
+		if (sensorMssg.voltageL == 999)
 			state = LEVELSENSOR_TIMEOUT;
 
-		if ( state == LEVELSENSOR_TIMEOUT)  {
-			if (sensorMssg.voltageL != 999 )
+		if (state == LEVELSENSOR_TIMEOUT) {
+			if (sensorMssg.voltageL != 999)
 				state = NORMAL;
 		}
 
 		redLEDnrFlashes = state;
+
+		if (state != lastState) {
+			lastState = state;
+			buzzerAccepted = false;
+		}
 
 		switch (state) {
 		case NORMAL:
@@ -188,27 +191,55 @@ void mainTask(void *pvParameter) {
 			if (key(KEY)) {
 				state = TEST;
 			}
-			buzzerOn = true;
+			buzzerOn = false;
+			buzzerAccepted = false;
 			break;
 		case NOMAINS:
 			gpio_set_level(GREEN_LED_PIN, 0);
 			lampState = LAMP_FLASH_FAST;
-			buzzerOn = false;
+			if (!buzzerAccepted)
+				buzzerOn = true;
+			if (key(KEY)) {
+				buzzerOn = false;
+				buzzerAccepted = true;
+			}
 			break;
 		case BATTERYLOW:
 			lampState = LAMP_OFF;
 			buzzerOn = false;
 			break;
+
 		case PUMPWASACTIVE:
-		case LEVEL_ALARM:
-		case LEVELSENSOR_TIMEOUT:
 			lampState = LAMP_BLINK;
+			if (!buzzerAccepted)
+				buzzerOn = true;
 			gpio_set_level(KEY_LED_PIN, 1);
 			if (key(KEY)) {
 				buzzerOn = false;
+				buzzerAccepted = true;
 				if (state == PUMPWASACTIVE)
 					state = PUMPWASACTIVEACCEPTED;
 			}
+			break;
+
+		case LEVEL_ALARM:
+		case LEVELSENSOR_TIMEOUT:
+			lampState = LAMP_BLINK;
+			if (!buzzerAccepted) {
+				gpio_set_level(KEY_LED_PIN, 1);
+				vTaskDelay(100 / portTICK_PERIOD_MS);
+				gpio_set_level(KEY_LED_PIN, 0);
+				vTaskDelay(100 / portTICK_PERIOD_MS);
+				buzzerOn = true;
+			}
+
+			if (key(KEY)) {
+				buzzerOn = false;
+				buzzerAccepted = true;
+			}
+			if (buzzerAccepted && (sensorMssg.state == 0)) // leave after acknowledge and key pressed
+				state = NORMAL;
+
 			break;
 
 		case PUMPWASACTIVEACCEPTED:
@@ -220,14 +251,16 @@ void mainTask(void *pvParameter) {
 			lampState = LAMP_BLINK;
 			if (key(KEY)) {
 				state = NORMAL;
+				buzzerAccepted = false;
 			}
 			break;
+
 		case TEST:
 			gpio_set_level(KEY_LED_PIN, 1);
 			gpio_set_level(LAMP_PIN, 1);
 			lampState = LAMP_ON;
 			buzzerOn = true;
-			vTaskDelay(500 / portTICK_PERIOD_MS);
+			vTaskDelay(2000 / portTICK_PERIOD_MS);
 			buzzerOn = false;
 			vTaskDelay(3000 / portTICK_PERIOD_MS);
 			state = NORMAL;
@@ -253,8 +286,8 @@ void udpTask(void *pvParameter) {
 	while (true) {
 		vTaskDelay(2000 / portTICK_PERIOD_MS);
 		cnts++;
-		sprintf(buf, "C:%2.1fA 5V:%2.1fV Bat:%2.1fV LevelL:%2.1fV,LevelH:%2.1fV,LevelS:%d, State:%d hr:%d\n\r", ADCValue[ADC_CURRENT], ADCValue[ADC_5V],
-				ADCValue[ADC_BATT], sensorMssg.voltageL,sensorMssg.voltageH, sensorMssg.state, (int)state, cnts / (3600));
+		sprintf(buf, "C:%2.1fA 5V:%2.1fV Bat:%2.1fV LevelL:%2.1fV,LevelH:%2.1fV,LevelS:%d, State:%d hr:%d\n\r", ADCValue[ADC_CURRENT],
+				ADCValue[ADC_5V], ADCValue[ADC_BATT], sensorMssg.voltageL, sensorMssg.voltageH, sensorMssg.state, (int)state, cnts / (3600));
 		udpSend(buf, UDPPORT);
 		ESP_LOGI(TAG, "UDP: %s", buf);
 	}
